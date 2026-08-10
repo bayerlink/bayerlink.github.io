@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bayerlink — raw sensor data over HDMI</title>
+<meta name="description" content="An open protocol carrying raw Bayer sensor data over an HDMI/DVI link: the display's active area as a byte container, self-described by a 48-byte header.">
+<link rel="icon" href="bayerlink.svg" type="image/svg+xml">
+<link rel="icon" href="bayerlink.png" type="image/png" sizes="250x250">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1f24; --muted: #57606a; --line: #d0d7de;
+    --card: #f6f8fa; --accent: #46a758; --code: #f6f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --line: #30363d;
+      --card: #161b22; --accent: #3fb950; --code: #161b22;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 17px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 44rem; margin: 0 auto; padding: 3rem 1.2rem 2rem; }
+  .logo { width: 72px; height: 72px; display: block; margin-bottom: .4rem; }
+  h1 { font-size: 2rem; margin: .2rem 0 0; letter-spacing: .01em; }
+  h1 sup { font-size: .45em; color: var(--muted); font-weight: 400; }
+  .tag { font-size: 1.15rem; color: var(--muted); margin: .3rem 0 1.6rem; }
+  pre { background: var(--code); border: 1px solid var(--line);
+        border-radius: 8px; padding: .8rem 1rem; overflow-x: auto;
+        font: .82rem/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+  .rule { border-left: 3px solid var(--accent); background: var(--card);
+          padding: .7rem 1rem; border-radius: 0 8px 8px 0; margin: 1.4rem 0; }
+  .rule b { color: var(--fg); }
+  section h2 { font-size: .8rem; text-transform: uppercase;
+               letter-spacing: .09em; color: var(--muted);
+               margin: 2.2rem 0 .8rem; }
+  .cards { display: grid; gap: .7rem; }
+  a.card { display: block; border: 1px solid var(--line); border-radius: 8px;
+           padding: .75rem 1rem; text-decoration: none; color: var(--fg);
+           background: var(--card); transition: border-color .15s; }
+  a.card:hover { border-color: var(--accent); }
+  a.card b { display: block; }
+  a.card span { color: var(--muted); font-size: .92rem; }
+  p a, footer a { color: var(--accent); text-decoration: none; }
+  p a:hover, footer a:hover { text-decoration: underline; }
+  footer { max-width: 44rem; margin: 0 auto; padding: 1.2rem;
+           border-top: 1px solid var(--line); color: var(--muted);
+           font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="bayerlink.svg" alt="">
+  <h1>bayerlink<sup>™</sup></h1>
+  <p class="tag">Raw sensor data over an HDMI/DVI link.</p>
+
+  <p>FPGA boards rarely have camera connectors; nearly everything has
+  HDMI. bayerlink treats a display link's active area as a byte
+  container: packed raw Bayer samples, one camera line per display
+  line, self-described by a 48-byte header — magic, V4L2 fourcc,
+  geometry, frame counter, stripe and source identity for multi-link
+  use, CRC. Real sensor data into any board with HDMI-in: no MIPI
+  hardware, no deserialisers, no per-sensor bring-up.</p>
+
+<pre>sensor ──CSI-2──▶ Raspberry Pi (libcamera raw) ──HDMI──▶ FPGA, or a capture stick</pre>
+
+  <div class="rule">One rule governs the link: <b>full-range RGB, no
+  scaling, no overscan, 4:4:4</b>. The test patterns exist to catch a
+  limited-range clamp on day one.</div>
+
+  <section>
+    <h2>The protocol</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/bayerlink/bayerlink/blob/main/PROTOCOL.md">
+        <b>PROTOCOL.md</b>
+        <span>The specification: header, CSI-2 packing rule, striping,
+        the fourcc registry. Conformance is producing the committed
+        vector bytes — say “speaks bayerlink v2” when you do.</span></a>
+      <a class="card" href="https://github.com/bayerlink/bayerlink/blob/main/GUIDE.md">
+        <b>GUIDE.md</b>
+        <span>The practical guide, routed by what is on your desk — Pi
+        source, FPGA receiver, $10-capture-stick bench, recording and
+        replay.</span></a>
+      <a class="card" href="https://github.com/bayerlink/bayerlink">
+        <b>bayerlink</b>
+        <span>Reference codec (Python, numpy only) and the conformance
+        vectors.</span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>The tools</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/bayerlink/picam2hdmi">
+        <b>picam2hdmi</b>
+        <span>A Raspberry Pi camera as the source — a sensor module
+        with an HDMI plug, controllable over HTTP. SETUP.md goes from
+        blank SD card to streaming instrument.</span></a>
+      <a class="card" href="https://github.com/bayerlink/bayertap">
+        <b>bayertap</b>
+        <span>The receiver’s toolbox on Linux: probe byte lanes, judge
+        a link, record and replay.</span></a>
+      <a class="card" href="https://github.com/bayerlink/bayerlink-fpga">
+        <b>bayerlink-fpga</b>
+        <span>The receive side on real boards: TMDS in, one raw sample
+        per clock out, judged bit-exact on the board's own ARM.
+        First board: PYNQ-Z2.</span></a>
+      <a class="card" href="https://github.com/lanserge/np2hw">
+        <b>np2hw · bayerlink_in</b>
+        <span>The generated receiver core itself — held bit-exact
+        against the reference codec in simulation, and now on
+        silicon.</span></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Apache-2.0 · bayerlink™ — the name asks one thing, see
+  <a href="https://github.com/bayerlink/bayerlink/blob/main/TRADEMARK.md">TRADEMARK.md</a> ·
+  <a href="https://github.com/bayerlink">GitHub</a> ·
+  <a href="https://github.com/sponsors/lanserge">Sponsor</a> ·
+  <a href="https://serge.rabyking.com">Serge Rabyking</a> ·
+  <a href="mailto:s.rabykin@gmail.com">s.rabykin@gmail.com</a>
+</footer>
+</body>
+</html>
